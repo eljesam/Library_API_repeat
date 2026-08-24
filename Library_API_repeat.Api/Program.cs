@@ -1,11 +1,16 @@
 using Library_API_repeat.Api.Data;
+using Library_API_repeat.Api.Services;
+using Library_API_repeat.Api.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<LibraryDbContext>(options => options.UseSqlite(
     builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddScoped<IAuthorService, AuthorService>();
 // Add services to the container.
 
 builder.Services.AddControllers();
