@@ -2,7 +2,7 @@
 {
     public class Author
     {
-        public int it {  get; set; }
+        public int id {  get; set; }
         public string name { get; set; } = string.Empty;
         public string? Country { get; set; }
 
