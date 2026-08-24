@@ -7,7 +7,9 @@
 
         public Book? Book { get; set; }
 
-        public string BorrowerName { get; set; } = string.Empty;
+        public int MemberId { get; set; }
+
+        public Member? Member { get; set; }
 
         public DateTime LoanDate { get; set; }
 
