@@ -5,11 +5,12 @@ using Library_API_repeat.Api.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.AspNetCore.Authorization;
 namespace Library_API_repeat.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class MembersController : ControllerBase
     {
         private readonly IMembersService _membersService;

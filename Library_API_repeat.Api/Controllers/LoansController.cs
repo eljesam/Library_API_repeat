@@ -3,11 +3,13 @@ using Library_API_repeat.Api.Data;
 using Library_API_repeat.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Library_API_repeat.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
    
         public class LoansController : ControllerBase
         {

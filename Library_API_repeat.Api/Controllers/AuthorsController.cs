@@ -4,12 +4,14 @@ using Library_API_repeat.Api.DTOs.Authors;
 using Library_API_repeat.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Library_API_repeat.Api.Services.Interfaces;
 
 namespace Library_API_repeat.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class AuthorsController : ControllerBase
     {
         private readonly IAuthorService _authorService;
