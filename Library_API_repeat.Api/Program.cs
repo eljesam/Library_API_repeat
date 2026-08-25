@@ -13,7 +13,7 @@ builder.Services.AddDbContext<LibraryDbContext>(options => options.UseSqlite(
 builder.Services.AddScoped<IAuthorService, AuthorService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IMembersService, MembersService>();
-
+builder.Services.AddScoped<ILoanService, LoanService>();
 // Add services to the container.
 
 builder.Services.AddControllers();
