@@ -24,7 +24,7 @@ namespace Library_API_repeat.Api.Controllers
 
         public async Task<ActionResult<IEnumerable<AuthorDTO>>> GetAuthors()
         {
-            var authros = await _authorService.GetAllAsync();   
+            var authros = await _authorService.GetAllAsync();
             return Ok(authros);
         }
 
@@ -59,28 +59,12 @@ namespace Library_API_repeat.Api.Controllers
         //PUT: api/authors/5
         [HttpPut("{id}")]
 
-        public async Task<IActionResult> UpdateAuthor(int id, Author author)
+        public async Task<IActionResult> UpdateAuthor(int id, UpdateAuthorDTO dto)
         {
-            if (id != author.id)
+            var updated = await _authorService.UpdateAsync(id, dto);
+            if (!updated)
             {
-                return BadRequest();
-            }
-
-            _context.Entry(author).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!AuthorExists(id))
-                {
-                    return NotFound();
-                }
-
-                throw;
+                return NotFound();
             }
 
             return NoContent();
@@ -91,24 +75,17 @@ namespace Library_API_repeat.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAuthor(int id)
         {
-            var author = await _context.Authors.FindAsync(id);
+            var deleted = await _authorService.DeleteAsync(id);
 
-            if (author == null)
+            if (!deleted)
             {
                 return NotFound();
             }
 
-            _context.Authors.Remove(author);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-
-
-    private bool AuthorExists(int id)
-        {
-            return _context.Authors.Any(e => e.id == id);
         }
     }
 }
+
+
+   
