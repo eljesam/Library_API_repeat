@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
-using Library_API_repeat.Api.Data;
+﻿using Library_API_repeat.Api.Data;
+using Library_API_repeat.Api.DTOs.Books;
 using Library_API_repeat.Api.Models;
+using Library_API_repeat.Api.Services;
+using Library_API_repeat.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,11 +13,11 @@ namespace Library_API_repeat.Api.Controllers
     [ApiController]
     public class BooksController : ControllerBase
     {
-        private readonly LibraryDbContext _context;
+        private readonly IBookService _bookService;
 
-        public BooksController(LibraryDbContext context)
+        public BooksController(IBookService bookService)
         {
-            _context = context;
+            _bookService = bookService;
         }
 
         // Get: api/books
@@ -22,39 +25,44 @@ namespace Library_API_repeat.Api.Controllers
 
         public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
         {
-            return await _context.Books.ToListAsync();
+            var books = await _bookService.GetAllAsync();
+            return Ok(books);
         }
 
         //Get: api/books/5
 
         [HttpGet("{id}")]
 
-        public async Task<ActionResult<Book>> GetBook(int id)
+        public async Task<ActionResult<BookDTO>> GetBook(int id)
         {
-            var book = await _context.Books.FindAsync(id);
+            var book = await _bookService.GetByIdAsync(id);
 
             if (book == null)
             {
                 return NotFound();
             }
 
-            return book;
+            return Ok(book);
         }
 
         //POST: api/books
         [HttpPost]
-        public async Task<ActionResult<Book>> CreateBook(Book book)
+        public async Task<ActionResult<BookDTO>> CreateBook(CreateBookDTO dto)
         {
-            var authorExists = await _context.Authors
-                .AnyAsync(a => a.id == book.AuthorId);
+            var authorExists = await _bookService.AuthorExistsAsync(dto.AuthorId);
+
 
             if (!authorExists)
             {
                 return BadRequest("Author does not exist");
             }
 
-            _context.Books.Add(book);
-            await _context.SaveChangesAsync();
+            var book = await _bookService.CreateAsync(dto);
+
+            if (book == null)
+            {
+                return BadRequest("Unable to add book");
+            }
 
             return CreatedAtAction(
                 nameof(GetBook),
@@ -65,37 +73,18 @@ namespace Library_API_repeat.Api.Controllers
         //PUT: api/books/5
         [HttpPut("{id}")]
 
-        public async Task<IActionResult> UpdateBook(int id, Book book)
+        public async Task<IActionResult> UpdateBook(int id, UpdateBookDTO dto)
         {
-            if (id != book.Id)
-            {
-                return BadRequest();
-            }
-
-            var authorExists = await _context.Authors
-                .AnyAsync(a => a.id == book.AuthorId);
-
+            var authorExists = await _bookService.AuthorExistsAsync(dto.AuthorId);
             if (!authorExists)
             {
-                return BadRequest("Author does not exist");
+                return BadRequest("Author does npt exist");
             }
 
-            _context.Entry(book).State = EntityState.Modified;
-
-
-            try
+            var updated = await _bookService.UpdateAsync(id, dto);
+            if (!updated)
             {
-                await _context.SaveChangesAsync();
-            }
-
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BookExists(id))
-                {
-                    return NotFound();
-                }
-
-                throw;
+                return NotFound();
             }
 
             return NoContent();
@@ -105,25 +94,14 @@ namespace Library_API_repeat.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBook(int id)
         {
-            var book = await _context.Books.FindAsync(id);
+            var deleted = await _bookService.DeleteAsync(id);
 
-            if (book == null)
+            if (!deleted)
             {
                 return NotFound();
             }
 
-            _context.Books.Remove(book);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-        private bool BookExists(int id)
-        {
-            throw new NotImplementedException();
-        }
-        private bool AuthorExists(int id)
-        {
-            return _context.Authors.Any(e => e.id == id);
         }
     }
 }
