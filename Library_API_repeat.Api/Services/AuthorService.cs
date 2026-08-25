@@ -28,7 +28,7 @@ namespace Library_API_repeat.Api.Services
                 .ToListAsync();
         }
 
-        public async Task<AuthorDTO> GetByIdAsync(int id)
+        public async Task<AuthorDTO?> GetByIdAsync(int id)
         {
             var author = await _context.Authors
                 .FirstOrDefaultAsync(a => a.id == id);
@@ -45,6 +45,58 @@ namespace Library_API_repeat.Api.Services
                 Country = author.Country
             };
 
+        }
+
+        public async Task<AuthorDTO> CreateAsync(CreateAuthorDTO dto)
+        {
+            var author = new Author
+            {
+                name = dto.Name,
+                Country = dto.Country,
+            };
+
+            _context.Authors.Add(author);
+            await _context.SaveChangesAsync();
+
+            return new AuthorDTO
+            {
+                Id = author.id,
+                Name = author.name,
+                Country = author.Country
+            };
+        }
+
+        public async Task<bool> UpdateAsync(int id, UpdateAuthorDTO dto)
+        {
+            var author = await _context.Authors.FindAsync(id);
+
+            if (author == null)
+            {
+                return false;
+            }
+
+            author.name = dto.Name;
+            author.Country = dto.Country;
+
+            await _context.SaveChangesAsync();
+
+            return true;
+
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var author = await _context.Authors.FindAsync(id);
+
+            if (author == null)
+            {
+                return false;
+            }
+
+            _context.Authors.Remove(author);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
     }
 }

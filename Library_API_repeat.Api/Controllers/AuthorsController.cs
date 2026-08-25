@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Library_API_repeat.Api.Data;
+using Library_API_repeat.Api.DTOs.Authors;
 using Library_API_repeat.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Library_API_repeat.Api.Services.Interfaces;
 
 namespace Library_API_repeat.Api.Controllers
 {
@@ -10,47 +12,47 @@ namespace Library_API_repeat.Api.Controllers
     [ApiController]
     public class AuthorsController : ControllerBase
     {
-        private readonly LibraryDbContext _context;
+        private readonly IAuthorService _authorService;
 
-        public AuthorsController(LibraryDbContext context)
+        public AuthorsController(IAuthorService authorService)
         {
-            _context = context;
+            _authorService = authorService;
         }
 
         // Get: api/authors
         [HttpGet]
 
-        public async Task<ActionResult<IEnumerable<Author>>> GetAuthors()
+        public async Task<ActionResult<IEnumerable<AuthorDTO>>> GetAuthors()
         {
-            return await _context.Authors.ToListAsync();
+            var authros = await _authorService.GetAllAsync();   
+            return Ok(authros);
         }
 
         //Get: api/authors/5
 
         [HttpGet("{id}")]
 
-        public async Task<ActionResult<Author>> GetAuthor(int id)
+        public async Task<ActionResult<AuthorDTO>> GetAuthor(int id)
         {
-            var author = await _context.Authors.FindAsync(id);
+            var author = await _authorService.GetByIdAsync(id);
 
             if (author == null)
             {
                 return NotFound();
             }
 
-            return author;
+            return Ok(author);
         }
 
         //POST: api/authors
         [HttpPost]
-        public async Task<ActionResult<Author>> CreateAuthor(Author author)
+        public async Task<ActionResult<AuthorDTO>> CreateAuthor(CreateAuthorDTO dto)
         {
-            _context.Authors.Add(author);
-            await _context.SaveChangesAsync();
+            var author = await _authorService.CreateAsync(dto);
 
             return CreatedAtAction(
                 nameof(GetAuthor),
-                new { id = author.id },
+                new { id = author.Id },
                 author);
         }
 
