@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Http;
-using Library_API_repeat.Api.Data;
+﻿using Library_API_repeat.Api.Data;
+using Library_API_repeat.Api.DTOs.Members;
+using Library_API_repeat.Api.Services.Interfaces;
 using Library_API_repeat.Api.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,43 +12,41 @@ namespace Library_API_repeat.Api.Controllers
     [ApiController]
     public class MembersController : ControllerBase
     {
-        private readonly LibraryDbContext _context;
+        private readonly IMembersService _membersService;
 
-        public MembersController(LibraryDbContext context)
+        public MembersController(IMembersService memberService)
         {
-            _context = context;
+            _membersService = memberService;
         }
 
-        // Get: api/members
+        // GET: api/members
         [HttpGet]
-
-        public async Task<ActionResult<IEnumerable<Member>>> GetMembers()
+        public async Task<ActionResult<IEnumerable<MembersDTO>>> GetMembers()
         {
-            return await _context.Members.ToListAsync();
+            var members = await _membersService.GetAllAsync();
+
+            return Ok(members);
         }
 
-        //Get: api/members/5
-
+        // GET: api/members/5
         [HttpGet("{id}")]
-
-        public async Task<ActionResult<Member>> GetMember(int id)
+        public async Task<ActionResult<MembersDTO>> GetMember(int id)
         {
-            var member = await _context.Members.FindAsync(id);
+            var member = await _membersService.GetByIdAsync(id);
 
             if (member == null)
             {
                 return NotFound();
             }
 
-            return member;
+            return Ok(member);
         }
 
-        //POST: api/books
+        // POST: api/members
         [HttpPost]
-        public async Task<ActionResult<Book>> CreateMember(Member member)
+        public async Task<ActionResult<MembersDTO>> CreateMember(CreateMembersDTO dto)
         {
-            _context.Members.Add(member);
-            await _context.SaveChangesAsync();
+            var member = await _membersService.CreateAsync(dto);
 
             return CreatedAtAction(
                 nameof(GetMember),
@@ -54,57 +54,34 @@ namespace Library_API_repeat.Api.Controllers
                 member);
         }
 
-        //PUT: api/member/5
+        // PUT: api/members/5
         [HttpPut("{id}")]
-
-        public async Task<IActionResult> UpdateMember(int id, Member member)
+        public async Task<IActionResult> UpdateMember(
+            int id,
+            UpdateMembersDTO dto)
         {
-            if (id != member.id)
-            {
-                return BadRequest();
-            }
+            var updated = await _membersService.UpdateAsync(id, dto);
 
-            _context.Entry(member).State = EntityState.Modified;
-
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MemberExists(id))
-                {
-                    return NotFound();
-                }
-
-                throw;
-            }
-
-            return NoContent();
-        }
-        //Delete: api/members/5
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMember(int id)
-        {
-            var member = await _context.Members.FindAsync(id);
-
-            if (member == null)
+            if (!updated)
             {
                 return NotFound();
             }
 
-            _context.Members.Remove(member);
-            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // DELETE: api/members/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteMember(int id)
+        {
+            var deleted = await _membersService.DeleteAsync(id);
+
+            if (!deleted)
+            {
+                return NotFound();
+            }
 
             return NoContent();
         }
-        private bool MemberExists(int id)
-        {
-            throw new NotImplementedException();
-        }
-       
     }
 }

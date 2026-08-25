@@ -11,6 +11,9 @@ builder.Services.AddDbContext<LibraryDbContext>(options => options.UseSqlite(
     builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<IAuthorService, AuthorService>();
+builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IMembersService, MembersService>();
+
 // Add services to the container.
 
 builder.Services.AddControllers();
