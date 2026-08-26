@@ -19,6 +19,7 @@ namespace Library_API_repeat.Api.Services
             return await _context.Loans
                 .Include(l => l.Book)
                 .Include(l => l.Member)
+                  .ThenInclude(m => m.User)
                 .Select(loan => new LoanDTO
                 {
                     id = loan.id,
@@ -27,9 +28,9 @@ namespace Library_API_repeat.Api.Services
                         ? loan.Book.Title
                         : string.Empty,
                     MemberId = loan.MemberId,
-                    MemberName = loan.Member != null
-                        ? loan.Member.Name
-                        : string.Empty,
+                    MemberName = loan.Member != null && loan.Member.User != null
+                                         ? loan.Member.User.Name
+                                                      : string.Empty,
                     LoanDate = loan.LoanDate,
                     DueDate = loan.DueDate,
                     ReturnDate = loan.ReturnDate
@@ -42,6 +43,7 @@ namespace Library_API_repeat.Api.Services
             var loan = await _context.Loans
                 .Include(l => l.Book)
                 .Include(l => l.Member)
+                  .ThenInclude(m => m.User)
                 .FirstOrDefaultAsync(l => l.id == id);
 
             if (loan == null)
@@ -55,7 +57,7 @@ namespace Library_API_repeat.Api.Services
                 BookId = loan.BookId,
                 BookTitle = loan.Book?.Title ?? string.Empty,
                 MemberId = loan.MemberId,
-                MemberName = loan.Member?.Name ?? string.Empty,
+                MemberName = loan.Member?.User?.Name ?? string.Empty,
                 LoanDate = loan.LoanDate,
                 DueDate = loan.DueDate,
                 ReturnDate = loan.ReturnDate
@@ -71,7 +73,9 @@ namespace Library_API_repeat.Api.Services
                 return null;
             }
 
-            var member = await _context.Members.FindAsync(dto.MemberId);
+            var member = await _context.Members
+                      .Include(m => m.User)
+                          .FirstOrDefaultAsync(m => m.id == dto.MemberId); 
 
             if (member == null)
             {
@@ -96,7 +100,7 @@ namespace Library_API_repeat.Api.Services
                 BookId = loan.BookId,
                 BookTitle = book.Title,
                 MemberId = loan.MemberId,
-                MemberName = member.Name,
+                MemberName = member.User?.Name ?? string.Empty,
                 LoanDate = loan.LoanDate,
                 DueDate = loan.DueDate,
                 ReturnDate = loan.ReturnDate

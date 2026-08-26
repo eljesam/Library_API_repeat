@@ -22,6 +22,11 @@ namespace Library_API_repeat.Api.Data
             modelBuilder.Entity<AppUser>()
                    .HasIndex(u => u.Email)
                    .IsUnique();
+            modelBuilder.Entity<AppUser>()
+                    .HasOne(u => u.Member)
+                    .WithOne(m => m.User)
+                    .HasForeignKey<Member>(m => m.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

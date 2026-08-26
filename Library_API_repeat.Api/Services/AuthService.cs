@@ -4,6 +4,7 @@ using System.Text;
 
 using Library_API_repeat.Api.Data;
 using Library_API_repeat.Api.DTOs.Authentication;
+using Library_API_repeat.Api.Models;
 using Library_API_repeat.Api.Services.Interfaces;
 
 using Microsoft.AspNetCore.Identity;
@@ -52,7 +53,15 @@ namespace Library_API_repeat.Api.Services
                 user,
                 dto.Password);
 
+            var member = new Member
+            {
+                User = user,
+                MembershipDate = DateTime.UtcNow
+            };
+
             _context.Users.Add(user);
+            _context.Members.Add(member);
+
             await _context.SaveChangesAsync();
 
             return true;
