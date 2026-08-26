@@ -1,0 +1,102 @@
+﻿
+@page "/login"
+@using Library_API_repeat.Client.Models.Auth
+@using Library_API_repeat.Client.Services
+
+@inject AuthenticationService AuthenticationService
+@inject NavigationManager Navigation
+
+<PageTitle>Login</PageTitle>
+<div class="login-container">
+	<div class="login-card">
+		<h1>Bibliotech Login</h1>
+
+		<p class="text-muted">
+			Sign in to your account
+		</p>
+		@if (!string.IsNullOrWhiteSpace(errorMessage))
+		{
+			<div class="alert alert-danger">
+				@errorMessage
+			</div>
+		}
+
+		<EditForm Model="@loginRequest"
+			OnValidSubmit="@HandleLogin">
+            
+			<DataAnnotationsValidator/>
+
+			<div class="mb-3">
+
+				<label class="form-label">
+					Email
+				</label>
+
+				<InputText class="form-control"
+						   @bind-Value="loginRequest.Email" />
+
+			</div>
+
+			<div class="mb-3">
+
+				<label class="form-label">
+					Password
+				</label>
+
+				<InputText class="form-control"
+						   type="password"
+						   @bind-Value="loginRequest.Password" />
+
+			</div>
+
+		<button type="submit" class="btn btn-primary w-100">
+				@if (isLoading)
+				{
+					<span>Signing in...</span>
+				}
+				else
+				{
+					<span>Login</span>
+				}
+			</button>
+
+	</EditForm>
+	</div>
+</div>
+@code {
+	private LoginRequest loginRequest = new();
+
+	private string? errorMessage;
+
+	private bool isLoading;
+
+	private async Task HandleLogin()
+	{
+		errorMessage = null;
+		isLoading = true;
+
+		try
+		{
+			var result =
+				await AuthenticationService.LoginAsync(loginRequest);
+
+			if (result == null)
+			{
+				errorMessage = "Invalid email or password.";
+				return;
+			}
+
+			Navigation.NavigateTo("/");
+		}
+		catch
+		{
+			errorMessage =
+				"Unable to connect to the server.";
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
+
+}

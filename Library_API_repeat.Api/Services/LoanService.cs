@@ -19,7 +19,7 @@ namespace Library_API_repeat.Api.Services
             return await _context.Loans
                 .Include(l => l.Book)
                 .Include(l => l.Member)
-                  .ThenInclude(m => m.User)
+                  .ThenInclude(m => m!.User)
                 .Select(loan => new LoanDTO
                 {
                     id = loan.id,
@@ -43,7 +43,7 @@ namespace Library_API_repeat.Api.Services
             var loan = await _context.Loans
                 .Include(l => l.Book)
                 .Include(l => l.Member)
-                  .ThenInclude(m => m.User)
+                  .ThenInclude(m => m!.User)
                 .FirstOrDefaultAsync(l => l.id == id);
 
             if (loan == null)
