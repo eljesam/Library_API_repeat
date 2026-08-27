@@ -1,0 +1,306 @@
+﻿@page "/authors"
+
+@using System.Net.Http.Json
+@using Library_API_repeat.Client.Models.Authors
+
+@inject HttpClient Http
+@inject IJSRuntime JS
+<PageTitle>Authors</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h1>Authors</h1>
+        <p class="text-muted">
+            Manage authors in the library.
+        </p>
+    </div>
+
+    <button class="btn btn-primary" @onclick="ShowAddForm">
+        Add Author
+    </button>
+</div>
+
+@if(showAddForm)
+{
+    <div class="card p-4 mb-4">
+        <h4>Add Author</h4>
+
+        <EditForm Model="@newAuthor" OnValidSubmit="@AddAuthor">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <InputText class="form-control"
+                           @bind-Value="newAuthor.Name" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Country</label>
+                <InputText class="form-control"
+                           @bind-Value="newAuthor.Country" />
+            </div>
+
+            <button type="submit"
+                    class="btn btn-success me-2">
+                Save
+            </button>
+
+            <button type="button"
+                    class="btn btn-secondary"
+                    @onclick="CancelAdd">
+                Cancel
+            </button>
+        </EditForm>
+    </div>
+}
+@if (showEditForm)
+{
+    <div class="card p-4 mb-4">
+        <h4>Edit Author</h4>
+
+        <EditForm Model="@editAuthor" OnValidSubmit="@UpdateAuthor">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+
+                <InputText class="form-control"
+                           @bind-Value="editAuthor.Name" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Country</label>
+
+                <InputText class="form-control"
+                           @bind-Value="editAuthor.Country" />
+            </div>
+
+            <button type="submit"
+                    class="btn btn-success me-2">
+                Save Changes
+            </button>
+
+            <button type="button"
+                    class="btn btn-secondary"
+                    @onclick="CancelEdit">
+                Cancel
+            </button>
+        </EditForm>
+    </div>
+}
+@if (isLoading)
+{
+    <p>Loading authors...</p>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+else if (authors.Count == 0)
+{
+    <div class="alert alert-info">
+        No authors have been added yet.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Country</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var author in authors)
+            {
+                <tr>
+                    <td>@author.Id</td>
+                    <td>@author.Name</td>
+                    <td>@author.Country</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-2"
+                                @onclick="() => ShowEditForm(author)">
+                            Edit
+                        </button>
+
+                        <button class="btn btn-sm btn-outline-danger"
+                                @onclick="() => DeleteAuthor(author)">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code
+{
+    private List<Author> authors = new();
+
+    private bool isLoading = true;
+
+    private string? errorMessage;
+    private bool showAddForm = false;
+
+    private CreateAuthorRequest newAuthor = new();
+    private bool showEditForm = false;
+
+    private int editingAuthorId;
+
+    private UpdateAuthorRequest editAuthor = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAuthors();
+    }
+
+    private async Task LoadAuthors()
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = null;
+
+            var result =
+                await Http.GetFromJsonAsync<List<Author>>(
+                    "/api/authors");
+
+            authors = result ?? new List<Author>();
+        }
+        catch
+        {
+            errorMessage = "Unable to load authors.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    private void ShowAddForm()
+    {
+        newAuthor = new CreateAuthorRequest();
+
+        showAddForm = true;
+        showEditForm = false;
+    }
+
+    private void CancelAdd()
+    {
+        showAddForm = false;
+        newAuthor = new CreateAuthorRequest();
+    }
+
+    private async Task AddAuthor()
+    {
+        try
+        {
+            var response = await Http.PostAsJsonAsync(
+                "/api/authors",
+                newAuthor);
+
+            if (response.IsSuccessStatusCode)
+            {
+                showAddForm = false;
+                newAuthor = new CreateAuthorRequest();
+
+                await LoadAuthors();
+            }
+            else
+            {
+                errorMessage = "Unable to add author.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Unable to add author.";
+        }
+    }
+
+    private void ShowEditForm(Author author)
+    {
+        editingAuthorId = author.Id;
+
+        editAuthor = new UpdateAuthorRequest
+        {
+            Name = author.Name,
+            Country = author.Country
+        };
+
+        showEditForm = true;
+        showAddForm = false;
+    }
+
+    private void CancelEdit()
+    {
+        showEditForm = false;
+        editingAuthorId = 0;
+        editAuthor = new UpdateAuthorRequest();
+    }
+    private async Task UpdateAuthor()
+    {
+        try
+        {
+            var response = await Http.PutAsJsonAsync(
+                $"/api/authors/{editingAuthorId}",
+                editAuthor);
+
+            if (response.IsSuccessStatusCode)
+            {
+                showEditForm = false;
+                editingAuthorId = 0;
+                editAuthor = new UpdateAuthorRequest();
+
+                await LoadAuthors();
+            }
+            else
+            {
+                errorMessage = "Unable to update author.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Unable to update author.";
+        }
+    }
+    private async Task DeleteAuthor(Author author)
+    {
+        var confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"Are you sure you want to delete {author.Name}?");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            errorMessage = null;
+
+            var response = await Http.DeleteAsync(
+                $"/api/authors/{author.Id}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadAuthors();
+            }
+            else
+            {
+                errorMessage = "Unable to delete author.";
+            }
+        }
+        catch
+        {
+            errorMessage = "Unable to delete author.";
+        }
+    }
+}

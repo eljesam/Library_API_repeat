@@ -1,4 +1,5 @@
 ﻿
+@page "/"
 @page "/login"
 @using Library_API_repeat.Client.Models.Auth
 @using Library_API_repeat.Client.Services
@@ -49,6 +50,11 @@
 
 			</div>
 
+			<div class="text-center mt-3">
+				Don't have an account?
+				<a href="/register">Create an account</a>
+			</div>
+
 		<button type="submit" class="btn btn-primary w-100">
 				@if (isLoading)
 				{
@@ -86,7 +92,7 @@
 				return;
 			}
 
-			Navigation.NavigateTo("/");
+			Navigation.NavigateTo("/dashboard");
 		}
 		catch
 		{

@@ -17,7 +17,18 @@ namespace Library_API_repeat.Client.Services
             _httpClient = httpClient;
             _jsruntime = jsruntime;
         }
+        public async Task InitializeAsync()
+        {
+            var token = await _jsruntime.InvokeAsync<string>(
+                "localStorage.getItem",
+                "authToken");
 
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+            }
+        }
         public async Task<LoginResponse?> LoginAsync(LoginRequest request)
         {
             var response = await _httpClient.PostAsJsonAsync(
@@ -48,5 +59,15 @@ namespace Library_API_repeat.Client.Services
 
             return loginResponse;
         }
+
+        public async Task<bool> RegisterAsync(RegisterRequest request)
+        {
+            var response = await _httpClient.PostAsJsonAsync(
+                "/api/authentication/register",
+                request);
+
+            return response.IsSuccessStatusCode;
+        }
+
     }
 }

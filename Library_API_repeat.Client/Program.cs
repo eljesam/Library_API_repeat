@@ -11,4 +11,10 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://
 
 builder.Services.AddScoped<AuthenticationService>();
 
-await builder.Build().RunAsync();
+var host = builder.Build();
+
+var authenticationService = host.Services.GetRequiredService<AuthenticationService>();
+
+await authenticationService.InitializeAsync();
+
+await host.RunAsync();

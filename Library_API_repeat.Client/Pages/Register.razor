@@ -1,0 +1,112 @@
+﻿@page "/register"
+
+@using Library_API_repeat.Client.Models.Auth
+@using Library_API_repeat.Client.Services
+
+@inject AuthenticationService AuthenticationService
+@inject NavigationManager Navigation
+
+<PageTitle>Register</PageTitle>
+
+<div class="register-container">
+
+    <div class="register-card">
+
+        <h1>Create Account</h1>
+
+        <p class="text-muted">
+            Register for the Library Management System.
+        </p>
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="alert alert-danger">
+                @errorMessage
+            </div>
+        }
+
+        <EditForm Model="@registerRequest"
+                  OnValidSubmit="@HandleRegister">
+
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+
+                <InputText class="form-control"
+                           @bind-Value="registerRequest.Name" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+
+                <InputText class="form-control"
+                           @bind-Value="registerRequest.Email" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+
+                <InputText class="form-control"
+                           type="password"
+                           @bind-Value="registerRequest.Password" />
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary w-100"
+                    disabled="@isLoading">
+
+                @(isLoading ? "Creating account..." : "Register")
+
+            </button>
+
+        </EditForm>
+
+        <div class="text-center mt-3">
+            Already have an account?
+            <a href="/login">Login</a>
+        </div>
+
+    </div>
+
+</div>
+
+@code {
+    private RegisterRequest registerRequest = new();
+
+    private string? errorMessage;
+
+    private bool isLoading;
+
+    private async Task HandleRegister()
+    {
+        errorMessage = null;
+        isLoading = true;
+
+        try
+        {
+            var success =
+                await AuthenticationService.RegisterAsync(registerRequest);
+
+            if (!success)
+            {
+                errorMessage =
+                    "Unable to register. The email may already be in use.";
+
+                return;
+            }
+
+            Navigation.NavigateTo("/login");
+        }
+        catch
+        {
+            errorMessage =
+                "Unable to connect to the server.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
