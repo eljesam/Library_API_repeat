@@ -14,7 +14,7 @@ namespace Library_API_repeat.Api.Services
         {
             _context = context;
         }
-        public async Task<IEnumerable<LoanDTO>> GetAllAsync()
+        public async Task<IEnumerable<LoanDTO>> GetAllLoansAsync()
         {
             return await _context.Loans
                 .Include(l => l.Book)
@@ -62,6 +62,41 @@ namespace Library_API_repeat.Api.Services
                 DueDate = loan.DueDate,
                 ReturnDate = loan.ReturnDate
             };
+        }
+        public async Task<IEnumerable<LoanDTO>> GetByUserIdAsync(int userId)
+        {
+            return await _context.Loans
+                .Include(l => l.Book)
+                .Include(l => l.Member)
+                    .ThenInclude(m => m!.User)
+                .Where(l =>
+                    l.Member != null &&
+                    l.Member.UserId == userId)
+                .Select(l => new LoanDTO
+                {
+                    id = l.id,
+
+                    BookId = l.BookId,
+
+                    BookTitle = l.Book != null
+                        ? l.Book.Title
+                        : string.Empty,
+
+                    MemberId = l.MemberId,
+
+                    MemberName =
+                        l.Member != null &&
+                        l.Member.User != null
+                            ? l.Member.User.Name
+                            : string.Empty,
+
+                    LoanDate = l.LoanDate,
+
+                    DueDate = l.DueDate,
+
+                    ReturnDate = l.ReturnDate
+                })
+                .ToListAsync();
         }
 
         public async Task<LoanDTO?> CreateAsync(CreateLoanDTO dto)

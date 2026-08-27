@@ -1,147 +1,124 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System.Security.Claims;
 using Library_API_repeat.Api.Data;
+using Library_API_repeat.Api.DTOs.Loans;
 using Library_API_repeat.Api.Models;
+using Library_API_repeat.Api.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authorization;
 
 namespace Library_API_repeat.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-   
-        public class LoansController : ControllerBase
+    public class LoansController : ControllerBase
+    {
+        private readonly ILoanService _loanService;
+
+        public LoansController(ILoanService loanService)
         {
-            private readonly LibraryDbContext _context;
-
-            public LoansController(LibraryDbContext context)
-            {
-                _context = context;
-            }
-
-            // Get: api/loans
-            [HttpGet]
-
-            public async Task<ActionResult<IEnumerable<Loan>>> GetLoans()
-            {
-                return await _context.Loans.ToListAsync();
-            }
-
-            //Get: api/loans/5
-
-            [HttpGet("{id}")]
-
-            public async Task<ActionResult<Loan>> GetLoan(int id)
-            {
-                var loan = await _context.Loans.FindAsync(id);
-
-                if (loan == null)
-                {
-                    return NotFound();
-                }
-
-                return loan;
-            }
-
-            //POST: api/loans
-            [HttpPost]
-            public async Task<ActionResult<Book>> CreateBook(Loan loan)
-            {
-                var bookExists = await _context.Books
-                    .AnyAsync(b => b.Id == loan.BookId);
-
-                if (!bookExists)
-                {
-                    return BadRequest("Book does not exist");
-                }
-
-                var memberExists = await _context.Members
-                    .AnyAsync(m => m.id == loan.MemberId);
-
-                if (!memberExists)
-                {
-                    return BadRequest("Member does not exist");
-                }
-
-                _context.Loans.Add(loan);
-                await _context.SaveChangesAsync();
-
-                return CreatedAtAction(
-                    nameof(GetLoan),
-                    new { id = loan.id },
-                    loan);
-            }
-
-            //PUT: api/loans/5
-            [HttpPut("{id}")]
-
-            public async Task<IActionResult> UpdateLoan(int id, Loan loan)
-            {
-                if (id != loan.id)
-                {
-                    return BadRequest();
-                }
-
-                 var bookExists = await _context.Books
-                    .AnyAsync(b => b.Id == loan.BookId);
-
-                if (!bookExists)
-                {
-                    return BadRequest("Book does not exist");
-                }
-
-                var memberExists = await _context.Members
-                    .AnyAsync(m => m.id == loan.MemberId);
-
-                if (!memberExists)
-                {
-                    return BadRequest("Member does not exist");
-                }
-
-                _context.Entry(loan).State = EntityState.Modified;
-
-
-                try
-                {
-                    await _context.SaveChangesAsync();
-                }
-
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!LoanExists(id))
-                    {
-                        return NotFound();
-                    }
-
-                    throw;
-                }
-
-                return NoContent();
-            }
-            //Delete: api/books/5
-
-            [HttpDelete("{id}")]
-            public async Task<IActionResult> DeleteBook(int id)
-            {
-                var loan = await _context.Loans.FindAsync(id);
-
-                if (loan == null)
-                {
-                    return NotFound();
-                }
-
-                _context.Loans.Remove(loan);
-                await _context.SaveChangesAsync();
-
-                return NoContent();
-            }
-            private bool LoanExists(int id)
-            {
-                throw new NotImplementedException();
-            }
-           
+            _loanService = loanService;
         }
+
+        // Get: api/loans
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll()
+        {
+            var loans = await _loanService.GetAllLoansAsync();
+
+            return Ok(loans);
+        }
+        // GET: api/loans/my
+        // Logged-in members can only view their own loans
+        [HttpGet("my")]
+        public async Task<IActionResult> GetMyLoans()
+        {
+            var userIdClaim =
+                User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var loans =
+                await _loanService.GetByUserIdAsync(userId);
+
+            return Ok(loans);
+        }
+
+
+        //Get: api/loans/5
+
+        [HttpGet("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetById(int id)
+        {
+            var loan =
+                await _loanService.GetByIdAsync(id);
+
+            if (loan == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(loan);
+        }
+
+
+
+        //POST: api/loans
+        [HttpPost]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Create(CreateLoanDTO dto)
+        {
+            var loan = await _loanService.CreateAsync(dto);
+
+            return CreatedAtAction(
+                nameof(GetById),
+                new { id = loan.id },
+                loan);
+        }
+
+
+        //PUT: api/loans/5
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(
+            int id,
+            UpdateLoanDTO dto)
+        {
+            var updated =
+                await _loanService.UpdateAsync(id, dto);
+
+            if (!updated)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+        //Delete: api/loans/5
+
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var deleted =
+                await _loanService.DeleteAsync(id);
+
+            if (!deleted)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
+        }
+
+    }
     }
     
 

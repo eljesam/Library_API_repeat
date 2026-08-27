@@ -4,7 +4,8 @@ namespace Library_API_repeat.Api.Services.Interfaces
 {
     public interface ILoanService
     {
-        Task<IEnumerable<LoanDTO>> GetAllAsync();
+        Task<IEnumerable<LoanDTO>> GetAllLoansAsync();
+        Task<IEnumerable<LoanDTO>> GetByUserIdAsync(int userId);
 
         Task<LoanDTO?> GetByIdAsync(int id);
 
