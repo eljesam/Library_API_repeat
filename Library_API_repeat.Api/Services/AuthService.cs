@@ -44,7 +44,8 @@ namespace Library_API_repeat.Api.Services
             var user = new AppUser
             {
                 Name = dto.Name,
-                Email = dto.Email
+                Email = dto.Email,
+                Role = "Member"
             };
 
             var passwordHasher = new PasswordHasher<AppUser>();
@@ -101,7 +102,11 @@ namespace Library_API_repeat.Api.Services
 
                 new Claim(
                     ClaimTypes.Email,
-                    user.Email)
+                    user.Email),
+
+                new Claim(
+                    ClaimTypes.Role, 
+                    user.Role)
             };
 
             var jwtKey = _configuration["Jwt:Key"];
@@ -130,9 +135,9 @@ namespace Library_API_repeat.Api.Services
             {
                 Token = new JwtSecurityTokenHandler()
                     .WriteToken(token),
-
                 Name = user.Name,
-                Email = user.Email
+                Email = user.Email,
+                Role = user.Role
             };
         }
     }

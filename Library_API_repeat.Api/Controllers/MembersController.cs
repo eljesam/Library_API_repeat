@@ -10,7 +10,7 @@ namespace Library_API_repeat.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class MembersController : ControllerBase
     {
         private readonly IMembersService _membersService;

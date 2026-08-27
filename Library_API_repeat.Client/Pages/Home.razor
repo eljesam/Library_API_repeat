@@ -1,5 +1,7 @@
 ﻿@page "/dashboard"
 
+@using Library_API_repeat.Client.Services
+@inject AuthenticationService AuthenticationService
 @inject HttpClient Http
 
 <PageTitle>Dashboard</PageTitle>
@@ -35,16 +37,18 @@ else
 			<p>@bookCount</p>
 		</div>
 
-		<div class="dashboard-card">
-			<h3>Members</h3>
-			<p>@memberCount</p>
-		</div>
+		@if (AuthenticationService.IsAdmin)
+		{
+			<div class="dashboard-card">
+				<h3>Members</h3>
+				<p>@memberCount</p>
+			</div>
 
-		<div class="dashboard-card">
-			<h3>Loans</h3>
-			<p>@loanCount</p>
-		</div>
-
+			<div class="dashboard-card">
+				<h3>Loans</h3>
+				<p>@loanCount</p>
+			</div>
+		}
 	
 	</div>
 }
@@ -63,14 +67,25 @@ else
 	{
 		try
 		{
-			authorCount = await GetCount("/api/authors");
-			bookCount = await GetCount("/api/books");
-			memberCount = await GetCount("/api/members");
-			loanCount = await GetCount("/api/loans");
+			authorCount =
+				await GetCount("/api/authors");
+
+			bookCount =
+				await GetCount("/api/books");
+
+			if (AuthenticationService.IsAdmin)
+			{
+				memberCount =
+					await GetCount("/api/members");
+
+				loanCount =
+					await GetCount("/api/loans");
+			}
 		}
 		catch
 		{
-			errorMessage = "Unable to load dashboard data.";
+			errorMessage =
+				"Unable to load dashboard data.";
 		}
 		finally
 		{

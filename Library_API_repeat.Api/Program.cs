@@ -69,7 +69,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+if (app.Environment.IsDevelopment())
+{
+    await AdminSeeder.SeedAdminAsync(
+        app.Services,
+        app.Configuration);
+}
 app.UseHttpsRedirection();
 
 app.UseCors("BlazorClient");

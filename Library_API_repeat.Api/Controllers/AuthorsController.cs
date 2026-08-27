@@ -48,6 +48,7 @@ namespace Library_API_repeat.Api.Controllers
 
         //POST: api/authors
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<AuthorDTO>> CreateAuthor(CreateAuthorDTO dto)
         {
             var author = await _authorService.CreateAsync(dto);
@@ -60,7 +61,7 @@ namespace Library_API_repeat.Api.Controllers
 
         //PUT: api/authors/5
         [HttpPut("{id}")]
-
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateAuthor(int id, UpdateAuthorDTO dto)
         {
             var updated = await _authorService.UpdateAsync(id, dto);
@@ -75,6 +76,7 @@ namespace Library_API_repeat.Api.Controllers
         //Delete: api/authors/5
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteAuthor(int id)
         {
             var deleted = await _authorService.DeleteAsync(id);

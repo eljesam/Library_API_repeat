@@ -8,65 +8,122 @@ namespace Library_API_repeat.Client.Services
     public class AuthenticationService
     {
         private readonly HttpClient _httpClient;
-        private readonly IJSRuntime _jsruntime;
+        private readonly IJSRuntime _jsRuntime;
+
+        public string? CurrentRole { get; private set; }
+
+        public bool IsAuthenticated { get; private set; }
+
+        public bool IsAdmin =>
+            IsAuthenticated &&
+            CurrentRole == "Admin";
+
+        public event Action? AuthStateChanged;
 
         public AuthenticationService(
             HttpClient httpClient,
-            IJSRuntime jsruntime)
+            IJSRuntime jsRuntime)
         {
             _httpClient = httpClient;
-            _jsruntime = jsruntime;
+            _jsRuntime = jsRuntime;
         }
-        public async Task InitializeAsync()
-        {
-            var token = await _jsruntime.InvokeAsync<string>(
-                "localStorage.getItem",
-                "authToken");
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", token);
-            }
-        }
-        public async Task<LoginResponse?> LoginAsync(LoginRequest request)
+        public async Task<LoginResponse?> LoginAsync(
+            LoginRequest request)
         {
             var response = await _httpClient.PostAsJsonAsync(
-                 "/api/authentication/login",
-                request
-                );
+                "/api/authentication/login",
+                request);
 
             if (!response.IsSuccessStatusCode)
             {
                 return null;
             }
 
-            var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponse>();
+            var loginResponse =
+                await response.Content
+                    .ReadFromJsonAsync<LoginResponse>();
 
-            if (loginResponse == null || string.IsNullOrWhiteSpace(loginResponse.Token))
+            if (loginResponse == null ||
+                string.IsNullOrWhiteSpace(loginResponse.Token))
             {
                 return null;
             }
 
-            await _jsruntime.InvokeVoidAsync(
+            await _jsRuntime.InvokeVoidAsync(
                 "localStorage.setItem",
                 "authToken",
                 loginResponse.Token);
 
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-                "Bearer",
-                loginResponse.Token);
+            await _jsRuntime.InvokeVoidAsync(
+                "localStorage.setItem",
+                "userRole",
+                loginResponse.Role);
+
+            _httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue(
+                    "Bearer",
+                    loginResponse.Token);
+
+            CurrentRole = loginResponse.Role;
+            IsAuthenticated = true;
+
+            AuthStateChanged?.Invoke();
 
             return loginResponse;
         }
 
-        public async Task<bool> RegisterAsync(RegisterRequest request)
+        public async Task<bool> RegisterAsync(
+            RegisterRequest request)
         {
-            var response = await _httpClient.PostAsJsonAsync(
-                "/api/authentication/register",
-                request);
+            var response =
+                await _httpClient.PostAsJsonAsync(
+                    "/api/authentication/register",
+                    request);
 
             return response.IsSuccessStatusCode;
+        }
+
+        public async Task InitializeAsync()
+        {
+            var token =
+                await _jsRuntime.InvokeAsync<string>(
+                    "localStorage.getItem",
+                    "authToken");
+
+            var role =
+                await _jsRuntime.InvokeAsync<string>(
+                    "localStorage.getItem",
+                    "userRole");
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue(
+                        "Bearer",
+                        token);
+
+                CurrentRole = role;
+                IsAuthenticated = true;
+            }
+        }
+
+        public async Task LogoutAsync()
+        {
+            await _jsRuntime.InvokeVoidAsync(
+                "localStorage.removeItem",
+                "authToken");
+
+            await _jsRuntime.InvokeVoidAsync(
+                "localStorage.removeItem",
+                "userRole");
+
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+
+            CurrentRole = null;
+            IsAuthenticated = false;
+
+            AuthStateChanged?.Invoke();
         }
 
     }

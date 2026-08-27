@@ -49,6 +49,7 @@ namespace Library_API_repeat.Api.Controllers
 
         //POST: api/books
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<BookDTO>> CreateBook(CreateBookDTO dto)
         {
             var authorExists = await _bookService.AuthorExistsAsync(dto.AuthorId);
@@ -74,7 +75,7 @@ namespace Library_API_repeat.Api.Controllers
 
         //PUT: api/books/5
         [HttpPut("{id}")]
-
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateBook(int id, UpdateBookDTO dto)
         {
             var authorExists = await _bookService.AuthorExistsAsync(dto.AuthorId);
@@ -94,6 +95,7 @@ namespace Library_API_repeat.Api.Controllers
         //Delete: api/books/5
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteBook(int id)
         {
             var deleted = await _bookService.DeleteAsync(id);

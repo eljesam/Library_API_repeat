@@ -20,13 +20,18 @@ namespace Library_API_repeat.Api.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<AppUser>()
-                   .HasIndex(u => u.Email)
-                   .IsUnique();
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
             modelBuilder.Entity<AppUser>()
-                    .HasOne(u => u.Member)
-                    .WithOne(m => m.User)
-                    .HasForeignKey<Member>(m => m.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                .Property(u => u.Role)
+                .HasDefaultValue("Member");
+
+            modelBuilder.Entity<AppUser>()
+                .HasOne(u => u.Member)
+                .WithOne(m => m.User)
+                .HasForeignKey<Member>(m => m.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
